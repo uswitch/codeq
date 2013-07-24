@@ -9,7 +9,8 @@
 (ns datomic.codeq.analyzers.clj
   (:require [datomic.api :as d]
             [datomic.codeq.util :refer [index->id-fn tempid?]]
-            [datomic.codeq.analyzer :as az]))
+            [datomic.codeq.analyzer :as az]
+            [clojure.tools.namespace.parse :as ns-parse]))
 
 (defn analyze-1
   "returns [tx-data ctx]"
@@ -41,6 +42,8 @@
 
           nameid (when naming (codename->id naming))
 
+          refering (when ns? (ns-parse/deps-from-ns-decl x))
+
           ret (cond-> ret
                       (tempid? codeqid)
                       (conj {:db/id codeqid
@@ -56,7 +59,16 @@
                             [:db/add codeqid :clj/defop (str op)])
 
                       (tempid? nameid)
-                      (conj [:db/add nameid :code/name naming]))]
+                      (conj [:db/add nameid :code/name naming])
+
+                      refering
+                      (concat (apply concat
+                                     (for [refname refering
+                                           :let [refid (codename->id refname)]]
+                                       (cond-> [[:db/add codeqid :clj/refers refid]]
+                                               
+                                               (tempid? refid)
+                                               (conj [:db/add refid :code/name (str refname)]))))))]
       [ret (assoc ctx :added added)])
     [ret ctx]))
 
@@ -101,6 +113,12 @@
        :db/valueType :db.type/string
        :db/cardinality :db.cardinality/one
        :db/doc "the def form (defn, defmacro etc) used to create this definition"
+       :db.install/_attribute :db.part/db}]
+   3 [{:db/id #db/id[:db.part/db]
+       :db/ident :clj/refers
+       :db/valueType :db.type/ref
+       :db/cardinality :db.cardinality/many
+       :db/doc "codenames refered by ns codeq"
        :db.install/_attribute :db.part/db}]})
 
 (deftype CljAnalyzer []

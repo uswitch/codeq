@@ -7,5 +7,6 @@
   :plugins [[lein-tar "1.1.0"]]
   :dependencies [[com.datomic/datomic-free "0.8.4020.24"]
                  [commons-codec "1.7"]
-                 [org.clojure/clojure "1.5.1"]]
+                 [org.clojure/clojure "1.5.1"]
+                 [org.clojure/tools.namespace "0.2.4"]]
   :source-paths ["src" "examples/src"])
