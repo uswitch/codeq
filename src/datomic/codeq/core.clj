@@ -435,7 +435,7 @@
   [& args]
   (apply main args)
   (shutdown-agents)
-  (d/shutdown)
+  (d/shutdown true)
   (System/exit 0))
 
 
